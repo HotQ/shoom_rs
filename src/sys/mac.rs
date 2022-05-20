@@ -8,7 +8,7 @@ pub(crate) unsafe fn create_or_open(
     create: bool,
     path: String,
     size: usize,
-) -> Result<*mut ffi::c_void> {
+) -> Result<(*mut ffi::c_void,)> {
     let path = ffi::CString::new(path.clone()).map_err(|_| Error::kErrorFFIFailed)?;
 
     if create {
@@ -61,5 +61,5 @@ pub(crate) unsafe fn create_or_open(
         return Err(Error::kErrorMappingFailed);
     };
 
-    Ok(memory)
+    Ok((memory,))
 }

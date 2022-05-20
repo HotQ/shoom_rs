@@ -7,9 +7,9 @@ description = "an extremely small library for creating & opening shared memory o
 
 [dependencies]
 
-[target.'cfg(target_os = "macos")'.dependencies.libc]
-version = "0.2"
+libc = "0.2"
 
 
 [target.'cfg(target_os = "windows")'.dependencies.winapi]
 version = "0.3"
+features = ["winbase", "handleapi", "memoryapi", "std"]
