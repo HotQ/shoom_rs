@@ -1,0 +1,15 @@
+[package]
+name = "shoom_rs"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "an extremely small library for creating & opening shared memory on Windows, and macOS."
+
+[dependencies]
+
+[target.'cfg(target_os = "macos")'.dependencies.libc]
+version = "0.2"
+
+
+[target.'cfg(target_os = "windows")'.dependencies.winapi]
+version = "0.3"
