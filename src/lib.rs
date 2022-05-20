@@ -16,6 +16,8 @@ pub struct Shoom {
     path: String,
     #[cfg(target_os = "windows")]
     handle: HANDLE,
+    #[cfg(target_os = "macos")]
+    fd: libc::c_int,
 }
 
 impl Shoom {
@@ -26,14 +28,20 @@ impl Shoom {
             path: format!("/{}", path),
             #[cfg(target_os = "windows")]
             handle: ptr::null_mut(),
+            #[cfg(target_os = "macos")]
+            fd:-1,
         }
     }
     pub unsafe fn create_or_open(&mut self, create: bool) -> Result<*mut ffi::c_void> {
         let rs = sys::create_or_open(create, self.path.clone(), self.size)?;
 
         self.data = rs.0;
-        #[cfg(target_os = "windows")]
-        self.handle = rs.1;
+        #[cfg(target_os = "windows")]{
+            self.handle = rs.1;
+        }
+        #[cfg(target_os = "macos")]{
+            self.fd = rs.1;
+        }
 
         Ok(rs.0)
     }
@@ -63,6 +71,12 @@ impl Drop for Shoom {
                 self.data,
                 #[cfg(target_os = "windows")]
                 self.handle,
+                #[cfg(target_os = "macos")]
+                self.fd,
+                #[cfg(target_os = "macos")]
+                self.size,
+                #[cfg(target_os = "macos")]
+                self.path.clone()
             )
         }
     }

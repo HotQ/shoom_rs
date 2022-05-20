@@ -8,7 +8,7 @@ pub(crate) unsafe fn create_or_open(
     create: bool,
     path: String,
     size: usize,
-) -> Result<(*mut ffi::c_void,)> {
+) -> Result<(*mut ffi::c_void,libc::c_int)> {
     let path = ffi::CString::new(path.clone()).map_err(|_| Error::kErrorFFIFailed)?;
 
     if create {
@@ -61,5 +61,11 @@ pub(crate) unsafe fn create_or_open(
         return Err(Error::kErrorMappingFailed);
     };
 
-    Ok((memory,))
+    Ok((memory,fd))
+}
+pub(crate) unsafe fn unmap(data: *mut ffi::c_void, fd: libc::c_int,size:usize,path:String) {
+
+    libc::munmap(data, size);
+    libc::close(fd);
+    if let Err(_) =  ffi::CString::new(path.clone()).map(|path|    libc::shm_unlink(path.as_ptr())){}
 }
