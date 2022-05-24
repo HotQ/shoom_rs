@@ -25,6 +25,9 @@ impl Shoom {
         Self {
             data: ptr::null_mut(),
             size,
+            #[cfg(target_os = "windows")]
+            path: path.clone(),
+            #[cfg(target_os = "macos")]
             path: format!("/{}", path),
             #[cfg(target_os = "windows")]
             handle: ptr::null_mut(),
