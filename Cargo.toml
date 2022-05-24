@@ -1,6 +1,6 @@
 [package]
 name = "shoom_rs"
-version = "0.1.2"
+version = "0.1.5"
 edition = "2021"
 license = "MIT"
 description = "an extremely small library for creating & opening shared memory on Windows, and macOS."

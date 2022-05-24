@@ -21,28 +21,30 @@ pub struct Shoom {
 }
 
 impl Shoom {
-    pub fn new<T: std::fmt::Display>(path: T, size: usize) -> Self {
+    pub fn new(path: &str, size: usize) -> Self {
         Self {
             data: ptr::null_mut(),
             size,
             #[cfg(target_os = "windows")]
-            path: path.clone(),
+            path: path.to_string(),
             #[cfg(target_os = "macos")]
             path: format!("/{}", path),
             #[cfg(target_os = "windows")]
             handle: ptr::null_mut(),
             #[cfg(target_os = "macos")]
-            fd:-1,
+            fd: -1,
         }
     }
     pub unsafe fn create_or_open(&mut self, create: bool) -> Result<*mut ffi::c_void> {
         let rs = sys::create_or_open(create, self.path.clone(), self.size)?;
 
         self.data = rs.0;
-        #[cfg(target_os = "windows")]{
+        #[cfg(target_os = "windows")]
+        {
             self.handle = rs.1;
         }
-        #[cfg(target_os = "macos")]{
+        #[cfg(target_os = "macos")]
+        {
             self.fd = rs.1;
         }
 
@@ -79,7 +81,7 @@ impl Drop for Shoom {
                 #[cfg(target_os = "macos")]
                 self.size,
                 #[cfg(target_os = "macos")]
-                self.path.clone()
+                self.path.clone(),
             )
         }
     }
