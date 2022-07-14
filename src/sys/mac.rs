@@ -1,6 +1,6 @@
+use crate::ErrorType;
 use std::ffi;
 use std::ptr;
-
 pub type Error = crate::Error;
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -9,7 +9,7 @@ pub(crate) unsafe fn create_or_open(
     path: String,
     size: usize,
 ) -> Result<(*mut ffi::c_void, libc::c_int)> {
-    let path = ffi::CString::new(path.clone()).map_err(|_| Error::kErrorFFIFailed)?;
+    let path = ffi::CString::new(path.clone()).map_err(|_| ErrorType::kErrorFFIFailed)?;
 
     if create {
         // shm segments persist across runs, and macOS will refuse
@@ -18,8 +18,10 @@ pub(crate) unsafe fn create_or_open(
         // TODO(amos) check errno while ignoring ENOENT?
         let ret = libc::shm_unlink(path.as_ptr());
         if ret < 0 {
-            if *(libc::__error()) != libc::ENOENT {
-                return Err(Error::kErrorCreationFailed);
+            let errno = *(libc::__error());
+            if errno != libc::ENOENT {
+                return Err(ErrorType::kErrorCreationFailed
+                    .context(format!("shm_unlink ret:{}, errno:{}", ret, errno)));
             }
         }
     }
@@ -34,9 +36,9 @@ pub(crate) unsafe fn create_or_open(
 
     if fd < 0 {
         if create {
-            return Err(Error::kErrorCreationFailed);
+            return Err(ErrorType::kErrorCreationFailed.context(format!("shm_open ret:{}", fd)));
         } else {
-            return Err(Error::kErrorOpeningFailed);
+            return Err(ErrorType::kErrorOpeningFailed.context(format!("shm_open ret:{}", fd)));
         }
     }
 
@@ -45,7 +47,8 @@ pub(crate) unsafe fn create_or_open(
         // newly-created POSIX shared memory object
         let ret = libc::ftruncate(fd, size as _);
         if ret != 0 {
-            return Err(Error::kErrorCreationFailed);
+            return Err(ErrorType::kErrorCreationFailed
+                .context(format!("ftruncate ret:{}, fd:{}, size:{}", ret, fd, size)));
         }
     }
 
@@ -58,7 +61,7 @@ pub(crate) unsafe fn create_or_open(
     let memory = libc::mmap(ptr::null_mut(), size as _, prot, libc::MAP_SHARED, fd, 0);
 
     if memory == libc::MAP_FAILED {
-        return Err(Error::kErrorMappingFailed);
+        return Err(ErrorType::kErrorMappingFailed.context("mmap() == libc::MAP_FAILED"));
     };
 
     Ok((memory, fd))

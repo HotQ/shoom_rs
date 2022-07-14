@@ -1,3 +1,4 @@
+use crate::ErrorType;
 use std::ffi;
 use std::ptr;
 use winapi::shared::minwindef::{DWORD, FALSE};
@@ -14,7 +15,8 @@ pub(crate) unsafe fn create_or_open(
     path: String,
     size: usize,
 ) -> Result<(*mut ffi::c_void, HANDLE)> {
-    let path = ffi::CString::new(path.clone()).map_err(|_| Error::kErrorFFIFailed)?;
+    let path = ffi::CString::new(path.clone())
+        .map_err(|_| ErrorType::kErrorFFIFailed.context("failed casting rust string to cstring"))?;
     let handle: HANDLE;
     if create {
         let size_high_order: DWORD = 0;
@@ -30,12 +32,12 @@ pub(crate) unsafe fn create_or_open(
         );
 
         if handle.is_null() {
-            return Err(Error::kErrorCreationFailed);
+            return Err(ErrorType::kErrorCreationFailed.context("CreateFileMappingA failed"));
         }
     } else {
         handle = OpenFileMappingA(memoryapi::FILE_MAP_READ, FALSE, path.as_ptr());
         if handle.is_null() {
-            return Err(Error::kErrorOpeningFailed);
+            return Err(ErrorType::kErrorOpeningFailed.context("OpenFileMappingA failed"));
         }
     }
 
@@ -47,7 +49,7 @@ pub(crate) unsafe fn create_or_open(
 
     let memory = memoryapi::MapViewOfFile(handle, access, 0, 0, size);
     if memory.is_null() {
-        return Err(Error::kErrorMappingFailed);
+        return Err(ErrorType::kErrorMappingFailed.context("MapViewOfFile failed"));
     }
     Ok((memory, handle))
 }

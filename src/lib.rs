@@ -9,6 +9,7 @@ use std::ptr;
 use winapi::um::winnt::HANDLE;
 
 pub type Error = error::ShoomError;
+pub type ErrorType = error::ShoomErrorType;
 pub type Result<T> = std::result::Result<T, Error>;
 pub struct Shoom {
     data: *mut ffi::c_void,
